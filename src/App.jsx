@@ -1,12 +1,9 @@
 import React, { use, Suspense, useState, Component } from 'react';
-// 1. Import the library as a raw module object
 import * as OrgModule from '@dabeng/react-orgchart';
 import ProfileCard from './components/ProfileCard';
 import AddMemberForm from './components/AddMemberForm';
 import './App.css';
 
-// 2. ESM Interop Fix: Manually extract the component from the module object
-// Some libraries in Vite result in nested .default.default objects.
 const OrganizationChart = OrgModule.default?.default || OrgModule.default || OrgModule;
 
 class ErrorBoundary extends Component {
@@ -17,7 +14,6 @@ class ErrorBoundary extends Component {
       <div className="error-screen" style={{ padding: '2rem', border: '2px solid red' }}>
         <h2>Critical Component Error</h2>
         <p>{this.state.error?.message}</p>
-        <p><i>Developer Tip: Check the Console (F12) for the Module structure logs.</i></p>
         <button onClick={() => window.location.reload()}>Refresh Application</button>
       </div>
     );
@@ -33,7 +29,8 @@ const transformToTree = (list) => {
   list.forEach((item) => {
     map[item.id] = { 
       ...item, 
-      name: `${item.first_name || 'Unnamed'} ${item.last_name || ''}`, 
+      // Library still requires a 'name' property to display
+      name: item.name || 'Unnamed Member', 
       children: [] 
     };
   });
@@ -57,10 +54,6 @@ const dataPromise = fetchFamilyData();
 
 const FamilyTree = () => {
   const rawData = use(dataPromise);
-  
-  // LOGGING: This helps us see if OrganizationChart is correctly resolved
-  console.log("DEBUG: OrganizationChart resolved to:", typeof OrganizationChart, OrganizationChart);
-  
   const treeData = transformToTree(rawData);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -69,13 +62,12 @@ const FamilyTree = () => {
     <div className="app-container">
       <header className="teams-header">
         <h1>Family Tree Viewer</h1>
-        <button className="primary-btn" onClick={() => setIsFormOpen(true)}>+ Add Family Member</button>
+        <button className="primary-btn" onClick={() => setIsFormOpen(true)}>+ Add Member</button>
       </header>
 
       <main className="teams-centered-view">
         {treeData.length > 0 ? (
           <ErrorBoundary>
-            {/* Using the resolved component */}
             <OrganizationChart 
               datasource={treeData[0]} 
               pan={true} 
@@ -98,7 +90,7 @@ const FamilyTree = () => {
 
 export default function App() {
   return (
-    <Suspense fallback={<div>Loading Family Vault...</div>}>
+    <Suspense fallback={<div>Loading Family Tree...</div>}>
       <FamilyTree />
     </Suspense>
   );
